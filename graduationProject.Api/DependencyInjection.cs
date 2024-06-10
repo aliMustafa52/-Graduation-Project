@@ -21,7 +21,7 @@ namespace graduationProject.Api
 				.AddDbContextConfig(configuration)
 				.AddMapsterConfig()
 				.AddFluentValidationConfig()
-				.AddAuthConfig();
+				.AddAuthConfig(configuration);
 
 			//add my services
 			services.AddScoped<IJobService, JobService>();
@@ -63,7 +63,7 @@ namespace graduationProject.Api
 				.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 			return services;
 		}
-		private static IServiceCollection AddAuthConfig(this IServiceCollection services)
+		private static IServiceCollection AddAuthConfig(this IServiceCollection services, IConfiguration configuration)
 		{
 			//single instance throuhout the project
 			services.AddSingleton<IJwtProvider, JwtProvider>();
@@ -72,6 +72,14 @@ namespace graduationProject.Api
 			services.AddIdentity<ApplicationUser, IdentityRole>()
 				.AddEntityFrameworkStores<ApplicationDbContext>();
 
+			// add IOptions
+			//services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+			services.AddOptions<JwtOptions>()
+				.BindConfiguration(JwtOptions.SectionName)
+				.ValidateDataAnnotations()
+				.ValidateOnStart();
+
+			var jwtSetting = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>();
 			services
 				.AddAuthentication(options =>
 				{
@@ -87,9 +95,9 @@ namespace graduationProject.Api
 						ValidateIssuer = true,
 						ValidateAudience = true,
 						ValidateLifetime = true,
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Ed3B6NzKG7jgvT2jZB6OPjm5m1EnmL2i")),
-						ValidIssuer = "SurveyBasket",
-						ValidAudience = "SurveyBasket Users"
+						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting?.Key!)),
+						ValidIssuer = jwtSetting?.Issuer,
+						ValidAudience = jwtSetting?.Audience
 					};
 				});
 

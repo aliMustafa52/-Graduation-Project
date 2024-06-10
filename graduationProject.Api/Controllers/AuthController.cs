@@ -25,5 +25,23 @@ namespace graduationProject.Api.Controllers
 			var authResponse = await _authService.RegisterAsync(registerRequest);
 			return authResponse is null ? BadRequest("Email already exists try to login") : Ok(authResponse);
 		}
+
+		[HttpPost("refresh")]
+		public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshTokenRequest, CancellationToken cancellationToken)
+		{
+			var authresponse = await _authService.GetRefreshTokenAsync(refreshTokenRequest.Token
+						, refreshTokenRequest.RefreshToken, cancellationToken);
+
+			return authresponse is null ? BadRequest("Invalid Token") : Ok(authresponse);
+		}
+
+		[HttpPost("revoke-refresh-token")]
+		public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest, CancellationToken cancellationToken)
+		{
+			var isRevoked = await _authService.RevokeRefreshTokenAsync(refreshTokenRequest.Token
+						, refreshTokenRequest.RefreshToken, cancellationToken);
+
+			return isRevoked ? Ok() : BadRequest("Operation Failed");
+		}
 	}
 }
