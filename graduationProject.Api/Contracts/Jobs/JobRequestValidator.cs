@@ -1,4 +1,6 @@
-﻿namespace graduationProject.Api.Contracts.Jobs
+﻿using FluentValidation;
+
+namespace graduationProject.Api.Contracts.Jobs
 {
 	public class JobRequestValidator :AbstractValidator<JobRequest>
 	{
@@ -16,9 +18,18 @@
                 .NotEmpty()
                 .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.UtcNow));
 
-            RuleFor(x => x.EnndsAt)
-                .NotEmpty()
-                .GreaterThanOrEqualTo(x => x.StartsAt);
-        }
-    }
+			RuleFor(x => x.EnndsAt)
+				.NotEmpty();
+
+			RuleFor(x => x)
+				.Must(HasValidDates)
+				.WithName(nameof(JobRequest.EnndsAt))
+				.WithMessage("{PropertyName} must be greater than start date");
+
+			RuleFor(x => x.ImageFile)
+				.NotEmpty();
+		}
+
+		private bool HasValidDates(JobRequest request) => request.EnndsAt >= request.StartsAt;
+	}
 }

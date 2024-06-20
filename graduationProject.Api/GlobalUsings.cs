@@ -10,5 +10,8 @@ global using System.Reflection;
 
 
 global using graduationProject.Api.Entities;
+global using graduationProject.Api.Abstractions;
+global using graduationProject.Api.Contracts.Jobs;
+global using graduationProject.Api.Errors;
 
 

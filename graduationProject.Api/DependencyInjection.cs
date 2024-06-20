@@ -16,6 +16,16 @@ namespace graduationProject.Api
 			// Add services to the container.
 			services.AddControllers();
 
+			//Add Cors
+			var allowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>();
+			services.AddCors(options =>
+				options.AddDefaultPolicy(builder => builder
+											.AllowAnyMethod()
+											.AllowAnyHeader()
+											.WithOrigins(allowedOrigins!)
+				)
+			);
+
 			services
 				.AddSwaggerConfig()
 				.AddDbContextConfig(configuration)
@@ -26,6 +36,8 @@ namespace graduationProject.Api
 			//add my services
 			services.AddScoped<IJobService, JobService>();
 			services.AddScoped<IAuthService, AuthService>();
+			services.AddScoped<IImageService, ImageService>();
+			services.AddScoped<ICategoryService,CategoryService>();
 
 
 			return services;

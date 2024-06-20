@@ -6,6 +6,15 @@
 		string LastName,
 		string Email,
 		string Password,
-		string ConfirmPassword
+		string ConfirmPassword,
+		bool IsProvider,
+		bool IsCustomer,
+		DateOnly BirthDate,
+		string Address,
+		string PhoneNumber,
+		string Governorate,
+		//for provider
+		string? Field,
+		int ExperienceYears
 	);
 }

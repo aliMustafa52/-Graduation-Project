@@ -7,6 +7,7 @@
 		double Price,
 		bool IsNegotiable,
 		DateOnly StartsAt,
-		DateOnly EnndsAt
+		DateOnly EnndsAt,
+		string ImageName
 	);
 }

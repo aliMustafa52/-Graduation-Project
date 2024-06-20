@@ -24,6 +24,16 @@
 
 			RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.Password);
-        }
+
+            RuleFor(x => x.Field)
+				.NotNull()
+                .NotEmpty()
+                .When(x => x.IsProvider);
+
+			RuleFor(x => x.ExperienceYears)
+				.NotNull()
+				.NotEmpty()
+				.When(x => x.IsProvider);
+		}
     }
 }

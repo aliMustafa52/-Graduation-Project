@@ -25,51 +25,52 @@ namespace graduationProject.Api.Controllers
 		[HttpGet("{id}")]
 		public async Task<IActionResult> Get([FromRoute]int id, CancellationToken cancellationToken)
 		{
-			var job = await _jobService.GetAsync(id, cancellationToken);
-			if (job is null)
-				return NotFound();
+			var result = await _jobService.GetAsync(id, cancellationToken);
 
-			var response = job.Adapt<JobResponse>();
-
-			return Ok(response);
+			return result.IsSuccess
+				? Ok(result.Value) 
+				: result.ToProblem();
 		}
 
 		[HttpPost("")]
-		public async Task<IActionResult> Add([FromBody]JobRequest request, CancellationToken cancellationToken)
+		public async Task<IActionResult> Add([FromForm]JobRequest request, CancellationToken cancellationToken)
 		{
-			var job = await _jobService.AddAsync(request.Adapt<Job>(),cancellationToken);
+			var result = await _jobService.AddAsync(request,cancellationToken);
 
-			var response = job.Adapt<JobResponse>();
-
-			return CreatedAtAction(nameof(Get),new {id =job.Id}, response);
+			return result.IsSuccess 
+				? CreatedAtAction(nameof(Get),new {id =result.Value.Id}, result.Value)
+				:result.ToProblem();
 		}
 
 		[HttpPut("{id}")]
-		public async Task<IActionResult> Update([FromRoute] int id,[FromBody] JobRequest request, CancellationToken cancellationToken)
+		public async Task<IActionResult> Update([FromRoute] int id,[FromForm] JobRequest request, CancellationToken cancellationToken)
 		{
 
-			var isUpdated = await _jobService.UpdateAsync(id,request.Adapt<Job>(),cancellationToken);
-			if(!isUpdated)
-				return NotFound();
+			var result = await _jobService.UpdateAsync(id,request,cancellationToken);
 
-			return Ok();
+			return result.IsSuccess
+				? NoContent()
+				:result.ToProblem();
 		}
 
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken cancellationToken)
 		{
 
-			var isUpdated = await _jobService.DeleteAsync(id,cancellationToken);
-			if (!isUpdated)
-				return NotFound();
+			var result = await _jobService.DeleteAsync(id,cancellationToken);
 
-			return Ok();
+			return result.IsSuccess
+				? Ok()
+				: result.ToProblem();
 		}
 		[HttpPut("{id}/togglenegotiable")]
 		public async Task<IActionResult> ToggleNegotiable([FromRoute] int id, CancellationToken cancellationToken)
 		{
-			var isToggled = await _jobService.ToggleNegotiableAsync(id, cancellationToken);
-			return isToggled ? NoContent() : NotFound();
+			var result = await _jobService.ToggleNegotiableAsync(id, cancellationToken);
+
+			return result.IsSuccess 
+				? NoContent() 
+				: result.ToProblem();
 		}
 	}
 }

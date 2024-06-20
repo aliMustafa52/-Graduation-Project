@@ -2,46 +2,63 @@
 using Microsoft.AspNetCore.Http;
 using graduationProject.Api.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 
 namespace graduationProject.Api.Controllers
 {
 	[Route("[controller]")]
 	[ApiController]
-	public class AuthController(IAuthService authService) : ControllerBase
+	public class AuthController(IAuthService authService,UserManager<ApplicationUser> userManager) : ControllerBase
 	{
 		private readonly IAuthService _authService = authService;
+		private readonly UserManager<ApplicationUser> _userManager = userManager;
 
 		[HttpPost("")]
 		public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
 		{
-			var authresponse = await _authService.GetTokenAsync(request.Email, request.Password, cancellationToken);
+			var authResponseResult = await _authService.GetTokenAsync(request.Email, request.Password, cancellationToken);
 
-			return authresponse is null ? BadRequest("Invalid Email/Password") : Ok(authresponse);
+			return authResponseResult.IsSuccess
+				? Ok(authResponseResult.Value)
+				: authResponseResult.ToProblem();
 		}
+
 
 		[HttpPost("register")]
 		public async Task<IActionResult> Register(RegisterRequest registerRequest)
 		{
-			var authResponse = await _authService.RegisterAsync(registerRequest);
-			return authResponse is null ? BadRequest("Email already exists try to login") : Ok(authResponse);
+			var authResponseResult = await _authService.RegisterAsync(registerRequest);
+
+			return authResponseResult.IsSuccess
+				? Ok(authResponseResult.Value)
+				: authResponseResult.ToProblem();
 		}
+
 
 		[HttpPost("refresh")]
 		public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshTokenRequest, CancellationToken cancellationToken)
 		{
-			var authresponse = await _authService.GetRefreshTokenAsync(refreshTokenRequest.Token
+			var authResponseResult = await _authService.GetRefreshTokenAsync(refreshTokenRequest.Token
 						, refreshTokenRequest.RefreshToken, cancellationToken);
 
-			return authresponse is null ? BadRequest("Invalid Token") : Ok(authresponse);
+			return authResponseResult.IsSuccess
+				? Ok(authResponseResult.Value)
+				: authResponseResult.ToProblem();
 		}
 
 		[HttpPost("revoke-refresh-token")]
 		public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest, CancellationToken cancellationToken)
 		{
-			var isRevoked = await _authService.RevokeRefreshTokenAsync(refreshTokenRequest.Token
+			var result = await _authService.RevokeRefreshTokenAsync(refreshTokenRequest.Token
 						, refreshTokenRequest.RefreshToken, cancellationToken);
 
-			return isRevoked ? Ok() : BadRequest("Operation Failed");
+			return result.IsSuccess 
+				? Ok() 
+				: result.ToProblem();
 		}
+
+
+
+
 	}
 }

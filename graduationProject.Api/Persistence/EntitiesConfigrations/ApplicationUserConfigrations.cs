@@ -1,4 +1,7 @@
-﻿namespace graduationProject.Api.Persistence.EntitiesConfigrations
+﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
+
+namespace graduationProject.Api.Persistence.EntitiesConfigrations
 {
 	public class ApplicationUserConfigrations : IEntityTypeConfiguration<ApplicationUser>
 	{
@@ -12,6 +15,10 @@
 				.ToTable("RefreshTokens")
 				.WithOwner()
 				.HasForeignKey("UserId");
+
+			//users types
+
+			
 		}
 	}
 }
