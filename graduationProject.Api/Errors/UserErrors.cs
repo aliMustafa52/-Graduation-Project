@@ -19,5 +19,8 @@
 
 		public static readonly Error InvalidRefreshToken =
 			new("User.InvalidRefreshToken", "Invalid Refresh Token", StatusCodes.Status400BadRequest);
+
+		public static readonly Error UserNotAssigned =
+			new("User.UserNotAssigned", "User Not Assigned with a type", StatusCodes.Status400BadRequest);
 	}
 }

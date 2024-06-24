@@ -12,10 +12,20 @@ namespace graduationProject.Api.Persistence
 		public DbSet<Provider> Providers { get; set; }
 		public DbSet<Customer> Customers { get; set; }
 		public DbSet<Category> Categories { get; set; }
+		public DbSet<Offer> Offers { get; set; }
+		public DbSet<Project> Projects { get; set; }
+		public DbSet<Contact> Contacts { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+			var cascadeFks = modelBuilder.Model
+								.GetEntityTypes()
+								.SelectMany(t => t.GetForeignKeys())
+								.Where(fk => fk.DeleteBehavior == DeleteBehavior.Cascade);
+			foreach (var fk in cascadeFks)
+				fk.DeleteBehavior = DeleteBehavior.Restrict;
 
 			base.OnModelCreating(modelBuilder);
 		}

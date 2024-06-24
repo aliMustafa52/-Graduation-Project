@@ -3,9 +3,12 @@ using graduationProject.Api.Authentication;
 using graduationProject.Api.Contracts.Authentication;
 using graduationProject.Api.Errors;
 using graduationProject.Api.Persistence;
+using graduationProject.Api.Seeds;
 using Microsoft.AspNetCore.Identity;
 using System.Numerics;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Principal;
 
 namespace graduationProject.Api.Services
 {
@@ -32,7 +35,11 @@ namespace graduationProject.Api.Services
 				return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
 
 			//generate JWT token
-			var (token, expiresIn) = _jwtProvider.GenerateToken(user);
+			var getUserRole = await userManager.GetRolesAsync(user);
+			var userSession = new UserSession(user.Id, user.FirstName, user.LastName, user.Email, getUserRole.First());
+			//
+			//generate JWT token
+			var (token, expiresIn) = _jwtProvider.GenerateToken(userSession);
 
 			//generate Refresh token
 			var refreshtoken = GenerateRefreshToken();
@@ -61,12 +68,6 @@ namespace graduationProject.Api.Services
 			if (existingUser is not null)
 				return Result.Failure<AuthResponse>(UserErrors.ExistingEmail);
 
-			
-			//
-			 await AddAdminIfNeeded();
-
-
-
 			ApplicationUser user = new()
 			{
 				Email = registerRequest.Email,
@@ -89,45 +90,27 @@ namespace graduationProject.Api.Services
 				return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
 			}
 
+
 			if (registerRequest.IsProvider)
 			{
+
 				var isAdded = AddProvider(registerRequest, lastUserId);
 				if (!isAdded)
 					return Result.Failure<AuthResponse>(UserErrors.FieldNotFound);
+
+				await userManager.AddToRoleAsync(user, AppRoles.Provider);
 			}
 			else if (registerRequest.IsCustomer)
 			{
 				AddCustomer(registerRequest, lastUserId);
+				await userManager.AddToRoleAsync(user, AppRoles.Customer);
 			}
 
-			//Assign Default Role : Admin to first registrar; rest is user
-			var checkAdmin = await _roleManager.FindByNameAsync("Admin");
-			if (checkAdmin is null)
-			{
-				await _roleManager.CreateAsync(new IdentityRole() { Name = "Admin" });
-				await userManager.AddToRoleAsync(user, "Admin");
-			}
-			else if (registerRequest.IsProvider)
-			{
-				var checkUser = await roleManager.FindByNameAsync("Provider");
-				if (checkUser is null)
-					await roleManager.CreateAsync(new IdentityRole() { Name = "Provider" });
-
-
-				await userManager.AddToRoleAsync(user, "Provider");
-
-			}
-			else if (registerRequest.IsCustomer)
-			{
-				var checkUser = await roleManager.FindByNameAsync("Customer");
-				if (checkUser is null)
-					await roleManager.CreateAsync(new IdentityRole() { Name = "Customer" });
-
-				await userManager.AddToRoleAsync(user, "Customer");
-			}
+			var getUserRole = await userManager.GetRolesAsync(user);
+			var userSession = new UserSession(user.Id, user.FirstName,user.LastName, user.Email, getUserRole.First());
 			//
 			//generate JWT token
-			var (token, expiresIn) = _jwtProvider.GenerateToken(user);
+			var (token, expiresIn) = _jwtProvider.GenerateToken(userSession);
 
 			//generate Refresh token
 			var refreshtoken = GenerateRefreshToken();
@@ -165,8 +148,11 @@ namespace graduationProject.Api.Services
 
 			userRefreshToken.RevokedOn = DateTime.UtcNow;
 
+			var getUserRole = await userManager.GetRolesAsync(user);
+			var userSession = new UserSession(user.Id, user.FirstName, user.LastName, user.Email, getUserRole.First());
+			//
 			//generate JWT token
-			var (newJwtToken, expiresIn) = _jwtProvider.GenerateToken(user);
+			var (newJwtToken, expiresIn) = _jwtProvider.GenerateToken(userSession);
 
 			//generate Refresh token
 			var newRefreshtoken = GenerateRefreshToken();
@@ -216,24 +202,6 @@ namespace graduationProject.Api.Services
 			var token = Convert.ToBase64String(number);
 
 			return token;
-		}
-		private async Task<bool> AddAdminIfNeeded()
-		{
-
-			if (_context.Users.Count() == 1)
-			{
-				var admin = await _userManager.Users.FirstOrDefaultAsync();
-				if (admin != null)
-				{
-					admin.FirstName = "Admin";
-					admin.LastName = "Admin";
-					await _userManager.UpdateAsync(admin);
-					await _context.SaveChangesAsync();
-					return true; // Admin added successfully
-				}
-			}
-
-			return false; // Admin not added
 		}
 		private async Task<string?> GetLastId()
 		{

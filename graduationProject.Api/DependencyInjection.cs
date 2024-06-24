@@ -1,6 +1,7 @@
 ﻿using FluentValidation.AspNetCore;
 using graduationProject.Api.Authentication;
 using graduationProject.Api.Persistence;
+using graduationProject.Api.Seeds;
 using graduationProject.Api.Services;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,14 +18,22 @@ namespace graduationProject.Api
 			services.AddControllers();
 
 			//Add Cors
-			var allowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>();
-			services.AddCors(options =>
-				options.AddDefaultPolicy(builder => builder
-											.AllowAnyMethod()
-											.AllowAnyHeader()
-											.WithOrigins(allowedOrigins!)
-				)
-			);
+			//var allowedOrigins = configuration.GetSection("AllowedOrigins").Get<string[]>();
+			//services.AddCors(options =>
+			//	options.AddDefaultPolicy(builder => builder
+			//								.AllowAnyMethod()
+			//								.AllowAnyHeader()
+			//								.WithOrigins(allowedOrigins!)
+			//	)
+			//);
+			services.AddCors(corsOptions =>
+			{
+				corsOptions.AddPolicy("Default", PolicyBuilder =>
+				{
+					PolicyBuilder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+				});
+
+			});
 
 			services
 				.AddSwaggerConfig()
@@ -38,6 +47,9 @@ namespace graduationProject.Api
 			services.AddScoped<IAuthService, AuthService>();
 			services.AddScoped<IImageService, ImageService>();
 			services.AddScoped<ICategoryService,CategoryService>();
+			services.AddScoped<IProjectService, ProjectService>();
+			services.AddScoped<IOfferService, OfferService>();
+			services.AddScoped<IContactUsService, ContactUsService>();
 
 
 			return services;
@@ -82,7 +94,9 @@ namespace graduationProject.Api
 
 			// add identity UserManager and IdentityRole
 			services.AddIdentity<ApplicationUser, IdentityRole>()
-				.AddEntityFrameworkStores<ApplicationDbContext>();
+				.AddEntityFrameworkStores<ApplicationDbContext>()
+				.AddSignInManager()
+				.AddRoles<IdentityRole>();
 
 			// add IOptions
 			//services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

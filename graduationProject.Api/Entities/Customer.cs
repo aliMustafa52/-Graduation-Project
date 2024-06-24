@@ -15,5 +15,6 @@
 
 
 		public ApplicationUser User { get; set; } = default!;
+		public ICollection<Project> Projects { get; set; } = [];
 	}
 }

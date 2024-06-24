@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using graduationProject.Api.Seeds;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -10,14 +11,14 @@ namespace graduationProject.Api.Authentication
 	{
 		private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-		public (string token, int expiresIn) GenerateToken(ApplicationUser user)
+		public (string token, int expiresIn) GenerateToken(UserSession user)
 		{
 			Claim[] claims = [
-				new(JwtRegisteredClaimNames.Sub,user.Id),
-				new(JwtRegisteredClaimNames.Email,user.Email!),
-				new(JwtRegisteredClaimNames.GivenName,user.FirstName),
-				new(JwtRegisteredClaimNames.FamilyName,user.LastName),
-				new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
+				new(ClaimTypes.NameIdentifier,user.Id),
+				new(ClaimTypes.Email,user.Email!),
+				new(ClaimTypes.GivenName,$"{user.FirstName} {user.LastName}"),
+				new(ClaimTypes.Role,user.Role),
+				new("Jti",Guid.NewGuid().ToString())
 			];
 
 			var expiresIn = _jwtOptions.ExpiryMinutes;

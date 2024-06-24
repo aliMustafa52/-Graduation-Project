@@ -1,6 +1,7 @@
 using graduationProject.Api;
 using graduationProject.Api.Contracts.Authentication;
 using graduationProject.Api.Persistence;
+using graduationProject.Api.Seeds;
 using Microsoft.Extensions.FileProviders;
 using System;
 
@@ -33,9 +34,21 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 //before Authorization
-app.UseCors();
+app.UseCors("Default");
 
+//add Roles and admin
+var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+using var scope = scopeFactory.CreateScope();
+
+var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+await DefaultRoles.SeedAsync(roleManager);
+await DefaultUsers.SeedAdminUserAsync(userManager);
+
+app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 
