@@ -10,7 +10,7 @@ namespace graduationProject.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	
+
 	public class ProjectsController(IProjectService projectService) : ControllerBase
 	{
 		private readonly IProjectService _projectService = projectService;
@@ -34,7 +34,7 @@ namespace graduationProject.Api.Controllers
 		}
 
 		[HttpGet("{id}")]
-		[Authorize(Roles = AppRoles.Provider)]
+		[Authorize(Roles = $"{AppRoles.Provider},{AppRoles.Customer}")]
 		public async Task<IActionResult> Get([FromRoute] int id, CancellationToken cancellationToken)
 		{
 			var result = await _projectService.GetAsync(id, cancellationToken);
@@ -85,6 +85,18 @@ namespace graduationProject.Api.Controllers
 		{
 
 			var result = await _projectService.ToggleStatusToCompletedAsync(id, cancellationToken);
+
+			return result.IsSuccess
+				? Ok()
+				: result.ToProblem();
+		}
+
+		[HttpDelete("{id}")]
+		[Authorize(Roles = AppRoles.Customer)]
+		public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken cancellationToken)
+		{
+
+			var result = await _projectService.DeleteAsync(id, cancellationToken);
 
 			return result.IsSuccess
 				? Ok()

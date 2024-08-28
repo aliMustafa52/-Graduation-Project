@@ -18,9 +18,11 @@ namespace graduationProject.Api.Controllers
 		[HttpGet("")]
 		public async Task<IActionResult> GetAll([FromRoute]int projectId, CancellationToken cancellationToken)
 		{
-			var categories = await _offerService.GetAllAsync(projectId,cancellationToken);
+			var result = await _offerService.GetAllAsync(projectId,cancellationToken);
 
-			return Ok(categories.Value);
+			return result.IsSuccess
+				? Ok(result.Value)
+				: result.ToProblem();
 		}
 
 		[HttpGet("{id}")]

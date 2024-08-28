@@ -38,6 +38,7 @@ namespace graduationProject.Api.Services
 				? Result.Failure<CategoryResponse>(CategriesErrors.CategroyNotFound)
 				: Result.Success(categroy);
 		}
+
 		public async Task<Result<CategoryResponse>> AddAsync(CategoryRequest request, CancellationToken cancellationToken = default)
 		{
 			var isExistingTitle = await _context.Categories.AnyAsync(x => x.Title == request.Title);

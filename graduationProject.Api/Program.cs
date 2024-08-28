@@ -1,5 +1,6 @@
 using graduationProject.Api;
 using graduationProject.Api.Contracts.Authentication;
+using graduationProject.Api.Hubs;
 using graduationProject.Api.Persistence;
 using graduationProject.Api.Seeds;
 using Microsoft.Extensions.FileProviders;
@@ -12,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 //call AddDependencies
 builder.Services.AddDependencies(builder.Configuration);
+
+//add SignalR
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -51,5 +55,8 @@ app.UseAuthorization();
 
 
 app.MapControllers();
+
+//add SignalR
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

@@ -19,10 +19,15 @@ namespace graduationProject.Api.Services
 
 			var offers = await _context.Offers
 						.Where(x => x.ProjectId == projectId)
+						.Select(x => new OfferResponse(x.Id,x.Message, x.Status, x.ProviderId
+							, $"{x.Provider.FirstName} {x.Provider.LastName}"))
 						.AsNoTracking()
 						.ToListAsync(cancellationToken);
 
-			return Result.Success(offers.Adapt<IEnumerable<OfferResponse>>());
+
+			
+
+			return Result.Success<IEnumerable<OfferResponse>>(offers);
 		}
 
 		public async Task<Result<OfferResponse>> GetAsync(int projectId, int id, CancellationToken cancellationToken = default)
@@ -31,9 +36,17 @@ namespace graduationProject.Api.Services
 			if (!isExistingProject)
 				return Result.Failure<OfferResponse>(ProjectsErrors.ProjectNotFound);
 
-			var offer = await _context.Offers.FindAsync(id,cancellationToken);
+			var offer = await  _context.Offers
+				.Where(x => x.Id == id)
+				.Select(x => new OfferResponse(x.Id, x.Message, x.Status, x.ProviderId
+												   , $"{x.Provider.FirstName} {x.Provider.LastName}"))
+				.AsNoTracking()
+				.SingleOrDefaultAsync(cancellationToken);
 
-			return Result.Success(offer.Adapt<OfferResponse>());
+			if (offer is null)
+				return Result.Failure<OfferResponse>(OffersErrors.OfferNotFound);
+
+			return Result.Success(offer);
 		}
 
 		public async Task<Result<OfferResponse>> AddAsync(int projectId, OfferRequest request, CancellationToken cancellationToken = default)

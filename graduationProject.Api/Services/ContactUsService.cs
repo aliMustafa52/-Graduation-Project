@@ -32,7 +32,7 @@ namespace graduationProject.Api.Services
 			await _context.Contacts.AddAsync(message, cancellationToken);
 			await _context.SaveChangesAsync(cancellationToken);
 
-			return (Result<ContactUsResponse>)Result.Success(message.Adapt<ContactUsResponse>());
+			return Result.Success(message.Adapt<ContactUsResponse>());
 		}
 
 		public async Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default)

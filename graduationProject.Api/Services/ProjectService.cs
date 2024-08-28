@@ -19,7 +19,8 @@ namespace graduationProject.Api.Services
 			return await _context.Projects
 					.Include(x => x.Offers)
 					.Select(x => new ProjectResponse(x.Id,x.Title,x.Description,x.CreatedById,x.Status,x.ImageName,
-							x.Offers.Select(o => new OfferResponse(o.Id,o.Message,o.Status))
+							x.Offers.Select(o => new OfferResponse(o.Id,o.Message,o.Status, o.ProviderId,
+								$"{o.Provider.FirstName} {o.Provider.LastName}"))
 							)
 					)
 					.AsNoTracking()
@@ -45,7 +46,8 @@ namespace graduationProject.Api.Services
 					.Where(x => x.CreatedById == customer.Id)
 					.Include(x => x.Offers)
 					.Select(x => new ProjectResponse(x.Id, x.Title, x.Description, x.CreatedById, x.Status, x.ImageName,
-							x.Offers.Select(o => new OfferResponse(o.Id, o.Message, o.Status))
+							x.Offers.Select(o => new OfferResponse(o.Id, o.Message, o.Status, o.ProviderId,
+								$"{o.Provider.FirstName} {o.Provider.LastName}"))
 							)
 					)
 					.AsNoTracking()
@@ -60,7 +62,8 @@ namespace graduationProject.Api.Services
 								.Where(x => x.Id == id)
 								.Include(x => x.Offers)
 								.Select(x => new ProjectResponse(x.Id, x.Title, x.Description, x.CreatedById, x.Status, x.ImageName,
-										x.Offers.Select(o => new OfferResponse(o.Id, o.Message, o.Status))
+										x.Offers.Select(o => new OfferResponse(o.Id, o.Message, o.Status, o.ProviderId,
+								$"{o.Provider.FirstName} {o.Provider.LastName}"))
 										)
 								)
 								.SingleOrDefaultAsync(cancellationToken);
@@ -198,6 +201,49 @@ namespace graduationProject.Api.Services
 				return Result.Failure(ProjectsErrors.ProjectNotFound);
 
 			project.Status = "Completed";
+			await _context.SaveChangesAsync(cancellationToken);
+
+			return Result.Success();
+		}
+
+		public async Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default)
+		{
+			var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = await _context.Users
+							.Where(x => x.Id == userId)
+							.Include(x => x.Customers)
+							.ThenInclude(x => x.Projects)
+							.SingleOrDefaultAsync(cancellationToken);
+			if (user is null)
+				return Result.Failure(UserErrors.InvalidCredentials);
+
+			var customer = user.Customers.FirstOrDefault();
+			if (customer is null)
+				return Result.Failure(UserErrors.UserNotAssigned);
+
+			var projects = await _context.Projects
+				.Where(x => x.CreatedById == customer.Id)
+				.ToListAsync(cancellationToken);
+
+			var project = await _context.Projects.FindAsync(id, cancellationToken);
+			if (project == null)
+				return Result.Failure(ProjectsErrors.ProjectNotFound);
+
+			if(!projects.Contains(project))
+				return Result.Failure(ProjectsErrors.CannotDeleteOthersProjects);
+
+			var offers = await _context.Offers.Where(x => x.ProjectId == project.Id).ToListAsync(cancellationToken);
+
+			if(offers is not null)
+			{
+                foreach (var offer in offers)
+                {
+					_context.Offers.Remove(offer);
+				}
+            }
+			
+
+			_context.Projects.Remove(project);
 			await _context.SaveChangesAsync(cancellationToken);
 
 			return Result.Success();

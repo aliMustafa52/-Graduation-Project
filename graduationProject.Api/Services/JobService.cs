@@ -1,19 +1,38 @@
-﻿using graduationProject.Api.Entities;
+﻿using graduationProject.Api.Contracts.Projects;
+using graduationProject.Api.Entities;
 using graduationProject.Api.Errors;
 using graduationProject.Api.Persistence;
 using Mapster;
+using System.Security.Claims;
 
 namespace graduationProject.Api.Services
 {
-	public class JobService(ApplicationDbContext context,IImageService imageService) : IJobService
+	public class JobService(ApplicationDbContext context,IImageService imageService,IHttpContextAccessor httpContextAccessor)
+		: IJobService
 	{
 		private readonly ApplicationDbContext _context = context;
 		private readonly IImageService _imageService = imageService;
+		private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
-		public async Task<IEnumerable<JobResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+		public async Task<Result<IEnumerable<JobResponse>>> GetAllForCurrentProviderAsync(CancellationToken cancellationToken = default)
 		{
-			var jobs = await _context.Jobs.AsNoTracking().ToListAsync(cancellationToken);
-			return jobs.Adapt<IEnumerable<JobResponse>>();
+			var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = await _context.Users
+							.Where(x => x.Id == userId)
+							.Include(x => x.Providers)
+							.SingleOrDefaultAsync(cancellationToken);
+			if (user is null)
+				return Result.Failure<IEnumerable<JobResponse>>(UserErrors.InvalidCredentials);
+
+			var provider = user.Providers.FirstOrDefault();
+			if (provider is null)
+				return Result.Failure<IEnumerable<JobResponse>>(UserErrors.UserNotAssigned);
+
+			var jobs = await _context.Jobs
+					.Where(x => x.ProviderId == provider.Id)
+					.AsNoTracking()
+					.ToListAsync(cancellationToken);
+			return Result.Success(jobs.Adapt<IEnumerable<JobResponse>>());
 		}
 		public async Task<Result<JobResponse>> GetAsync(int id, CancellationToken cancellationToken = default)
 		{
@@ -37,6 +56,21 @@ namespace graduationProject.Api.Services
 				job.ImageName = imageName.Value;
 			}
 
+			var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = await _context.Users
+							.Where(x => x.Id == userId)
+							.Include(x => x.Providers)
+							.SingleOrDefaultAsync(cancellationToken);
+			if (user is null)
+				return Result.Failure<JobResponse>(UserErrors.InvalidCredentials);
+
+			var provider = user.Providers.FirstOrDefault();
+			if (provider is null)
+				return Result.Failure<JobResponse>(UserErrors.UserNotAssigned);
+
+			job.ProviderId = provider.Id;
+			provider.Jobs.Add(job);
+
 			await _context.Jobs.AddAsync(job,cancellationToken);
 			await _context.SaveChangesAsync(cancellationToken);
 
@@ -44,7 +78,21 @@ namespace graduationProject.Api.Services
 		}
 		public async Task<Result> UpdateAsync(int id, JobRequest request, CancellationToken cancellationToken = default)
 		{
-			var currentJob = await _context.Jobs.FindAsync(id,cancellationToken);
+
+			var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = await _context.Users
+							.Where(x => x.Id == userId)
+							.Include(x => x.Providers)
+							.SingleOrDefaultAsync(cancellationToken);
+			if (user is null)
+				return Result.Failure<JobResponse>(UserErrors.InvalidCredentials);
+
+			var provider = user.Providers.FirstOrDefault();
+			if (provider is null)
+				return Result.Failure<JobResponse>(UserErrors.UserNotAssigned);
+
+			var currentJob = await _context.Jobs
+					.SingleOrDefaultAsync(x => x.Id == id && x.ProviderId == provider.Id, cancellationToken);
 			if (currentJob is null)
 				return Result.Failure(JobsErrors.JobNotFound);
 
@@ -60,22 +108,34 @@ namespace graduationProject.Api.Services
 			}
 			currentJob.Title = request.Title;
 			currentJob.Description = request.Description;
-			currentJob.Price = request.Price;
-			currentJob.IsNegotiable = request.IsNegotiable;
 			currentJob.StartsAt = request.StartsAt;
 			currentJob.EnndsAt = request.EnndsAt;
 
+			
 			await _context.SaveChangesAsync(cancellationToken);
 			return Result.Success();
 		}
 
-		public async Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default)
+		public async Task<Result> DeleteAsync(int id,  CancellationToken cancellationToken = default)
 		{
-			var job = await _context.Jobs.FindAsync(id,cancellationToken);
-			if(job is null)
+			var userId = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = await _context.Users
+							.Where(x => x.Id == userId)
+							.Include(x => x.Providers)
+							.SingleOrDefaultAsync(cancellationToken);
+			if (user is null)
+				return Result.Failure<JobResponse>(UserErrors.InvalidCredentials);
+
+			var provider = user.Providers.FirstOrDefault();
+			if (provider is null)
+				return Result.Failure<JobResponse>(UserErrors.UserNotAssigned);
+
+			var job = await _context.Jobs
+					.SingleOrDefaultAsync(x => x.Id == id && x.ProviderId == provider.Id, cancellationToken);
+			if (job is null)
 				return Result.Failure(JobsErrors.JobNotFound);
 
-			if(job.ImageName is not null)
+			if (job.ImageName is not null)
 				_imageService.DeleteImage(job.ImageName,cancellationToken);
 
 			_context.Jobs.Remove(job);
@@ -84,17 +144,7 @@ namespace graduationProject.Api.Services
 			return Result.Success();
 		}
 
-		public async Task<Result> ToggleNegotiableAsync(int id, CancellationToken cancellationToken = default)
-		{
-			var job = await _context.Jobs.FindAsync(id,cancellationToken);
-			if (job is null)
-				return Result.Failure(JobsErrors.JobNotFound);
-
-			job.IsNegotiable = !job.IsNegotiable;
-			await _context.SaveChangesAsync(cancellationToken);
-
-			return Result.Success();
-		}
+		
 
 		
 	}

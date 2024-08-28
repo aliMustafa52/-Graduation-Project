@@ -12,5 +12,6 @@ namespace graduationProject.Api.Services
 		Task<Result> UpdateAsync(int id, ProjectRequest request, CancellationToken cancellationToken = default);
 		Task<Result> ToggleStatusToAssignedAsync(int id, CancellationToken cancellationToken = default);
 		Task<Result> ToggleStatusToCompletedAsync(int id, CancellationToken cancellationToken = default);
+		Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default);
 	}
 }

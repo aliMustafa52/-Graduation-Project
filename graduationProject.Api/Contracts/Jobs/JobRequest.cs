@@ -3,8 +3,6 @@
 	public record JobRequest(
 		string Title,
 		string Description,
-		double Price,
-		bool IsNegotiable,
 		DateOnly StartsAt,
 		DateOnly EnndsAt,
 		IFormFile? ImageFile

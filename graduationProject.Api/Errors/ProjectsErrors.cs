@@ -11,6 +11,9 @@
 		public static readonly Error CannotEditOthersProjects
 				= new("Project.CannotEditOthersProjects", "Cannot Edit Others Projects", StatusCodes.Status400BadRequest);
 
+		public static readonly Error CannotDeleteOthersProjects
+				= new("Project.CannotDeleteOthersProjects", "Cannot Delete Others Projects", StatusCodes.Status400BadRequest);
+
 		public static readonly Error ProjectAssignedOrCompleted
 				= new("Project.ProjectAssignedOrCompleted", "Project Assigned to another provider Or Completed", StatusCodes.Status400BadRequest);
 	}

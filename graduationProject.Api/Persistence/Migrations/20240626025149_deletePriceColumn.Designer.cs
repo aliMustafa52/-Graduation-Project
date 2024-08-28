@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using graduationProject.Api.Persistence;
 
@@ -11,9 +12,11 @@ using graduationProject.Api.Persistence;
 namespace graduationProject.Api.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240626025149_deletePriceColumn")]
+    partial class deletePriceColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -398,6 +401,9 @@ namespace graduationProject.Api.Persistence.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("ProviderId");
+
+                    b.HasIndex("Title")
+                        .IsUnique();
 
                     b.HasIndex("UpdatedById");
 

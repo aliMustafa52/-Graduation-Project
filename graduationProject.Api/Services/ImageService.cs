@@ -3,13 +3,9 @@
 	public class ImageService(IWebHostEnvironment webHostEnvironment) : IImageService
 	{
 		private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
-		private List<string> _allowedExtensions = [".jpg", ".jpeg", ".png"];
-		private int _maxAllowedSize = 2097152;
+		private readonly List<string> _allowedExtensions = [".jpg", ".jpeg", ".png"];
+		private readonly int _maxAllowedSize = 2097152;
 
-		//public Task<IFormFile> GetAsync(string imageName)
-		//{
-			
-		//}
 
 		public async Task<Result<string>> SaveImageAsync(IFormFile file, CancellationToken cancellationToken = default)
 		{

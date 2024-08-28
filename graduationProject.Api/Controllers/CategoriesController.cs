@@ -1,4 +1,5 @@
 ﻿using graduationProject.Api.Contracts.Categories;
+using graduationProject.Api.Seeds;
 using graduationProject.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +9,6 @@ namespace graduationProject.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	[Authorize]
 	public class CategoriesController(ICategoryService categoryService) : ControllerBase
 	{
 		private readonly ICategoryService _categoryService = categoryService;
@@ -32,6 +32,7 @@ namespace graduationProject.Api.Controllers
 		}
 
 		[HttpPost("")]
+		[Authorize(Roles = AppRoles.Admin)]
 		public async Task<IActionResult> Add([FromForm] CategoryRequest request, CancellationToken cancellationToken)
 		{
 			var result = await _categoryService.AddAsync(request, cancellationToken);
@@ -42,6 +43,7 @@ namespace graduationProject.Api.Controllers
 		}
 
 		[HttpPut("{id}")]
+		[Authorize(Roles = AppRoles.Admin)]
 		public async Task<IActionResult> Update([FromRoute] int id, [FromForm] CategoryRequest request, CancellationToken cancellationToken)
 		{
 
@@ -53,6 +55,7 @@ namespace graduationProject.Api.Controllers
 		}
 
 		[HttpPut("{id}/delete")]
+		[Authorize(Roles = AppRoles.Admin)]
 		public async Task<IActionResult> ToggleStatus([FromRoute] int id, CancellationToken cancellationToken)
 		{
 

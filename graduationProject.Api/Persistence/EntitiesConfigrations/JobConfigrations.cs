@@ -5,7 +5,6 @@ namespace graduationProject.Api.Persistence.EntitiesConfigrations
 	{
 		public void Configure(EntityTypeBuilder<Job> builder)
 		{
-			builder.HasIndex(x => x.Title).IsUnique();
 
 			builder.Property(x => x.Title)
 				.IsRequired()

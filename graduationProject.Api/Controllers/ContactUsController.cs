@@ -46,7 +46,7 @@ namespace graduationProject.Api.Controllers
 				return BadRequest(result.Error);
 			}
 
-			return CreatedAtAction(nameof(GetAsync), new { id = result.Value.Id }, result.Value);
+			return Ok( result.Value);
 		}
 
 

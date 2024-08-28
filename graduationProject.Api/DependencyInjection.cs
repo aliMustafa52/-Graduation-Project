@@ -50,6 +50,8 @@ namespace graduationProject.Api
 			services.AddScoped<IProjectService, ProjectService>();
 			services.AddScoped<IOfferService, OfferService>();
 			services.AddScoped<IContactUsService, ContactUsService>();
+			services.AddScoped<IProfileService, ProfileService>();
+			services.AddScoped<IChatService, ChatService>();
 
 
 			return services;
